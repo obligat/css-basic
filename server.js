@@ -17,7 +17,7 @@ const options = {
   headers: {
     'User-Agent': 'node',
     Accept: 'application/vnd.github.v3+json',
-    Authorization: 'token {/** my delete token*/}',
+    Authorization: 'token <your delete token>',
   },
 }
 
@@ -30,21 +30,33 @@ const rl = readline.createInterface({
 console.log('====请输入仓库名====')
 rl.prompt()
 
-rl.on('line', (line) => {
-  const repo = line.trim()
+const onDeletRepo = async (repo) => {
+  return new Promise((resolve, reject) => {
+    const req = https.request(options, (res) => {
+      resolve()
+    })
 
-  options.path = `/repos/obligat/${repo}`
-  console.log('即将删除 repo: ', options.path)
+    req.on('error', (error) => {
+      console.log('error', error)
+      reject()
+    })
+    req.end()
+  })
+}
 
-  const req = https.request(options, (res) => {
-    console.log(repo, '删除成功')
+rl.on('line', async (line) => {
+  const repos = line.trim().split(' ')
+
+  while (repos.length) {
+    const nextRepo = repos.shift()
+    options.path = `/repos/obligat/${nextRepo}`
+
+    console.log('即将删除 repo: ', options.path)
+
+    await onDeletRepo(nextRepo)
+    console.log(nextRepo, '删除成功')
     rl.prompt()
-  })
-
-  req.on('error', (error) => {
-    console.log('error', error)
-  })
-  req.end()
+  }
 }).on('close', () => {
   process.exit(0)
 })
